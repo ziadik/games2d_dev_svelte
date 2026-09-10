@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Табло Аэропорта | Live API</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #050508;
+    color: #e8c84a;
+    font-family: 'Courier New', Courier, monospace;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    overflow-x: hidden;
+  }
+
+  .board {
+    width: 100%;
+    max-width: 1300px;
+    background: linear-gradient(180deg, #0f0f16 0%, #08080c 100%);
+    border: 1px solid #2a2a35;
+    border-radius: 4px;
+    padding: 12px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 80px rgba(0,0,0,0.9);
+    position: relative;
+  }
+
+  .board::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 10;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+    opacity: 0.6;
+    border-radius: 4px;
+  }
+
+  .datetime-header {
+    text-align: right;
+    font-size: 30px;
+    letter-spacing: 3px;
+    color: #e8c84a;
+    margin-bottom: 12px;
+    text-shadow: 0 0 4px rgba(232, 200, 74, 0.4);
+    font-weight: bold;
+  }
+
+  .col-headers {
+    display: grid;
+    grid-template-columns: 40px 60px 1fr 80px 55px 1fr;
+    gap: 3px;
+    margin-bottom: 5px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 3px;
+  }
+  .col-headers span {
+    font-size: 22px;
+    letter-spacing: 1px;
+    color: #b8a83a;
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: bold;
+    padding: 0 2px;
+  }
+
+  .section-divider {
+    margin: 8px 0 3px 0;
+    padding: 2px 5px;
+    background: #15151e;
+    border-left: 3px solid #e8c84a;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #fff;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+
+  .flights {
+    display: flex;
+    flex-direction: column;
+    /* gap: 4px; */
+  }
+
+  .flight-row {
+    display: grid;
+    grid-template-columns: 40px 60px 1fr 80px 55px 1fr;
+    gap: 15px;
+    align-items: center;
+  }
+
+  /* ── Логотип авиакомпании ────────────── */
+  .airline-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    width: 40px;
+  }
+  
+  .airline-logo img {
+    max-height: 24px;
+    max-width: 36px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 2px rgba(232, 200, 74, 0.3));
+  }
+
+  /* ── Split-Flap ячейки ────────────── */
+  .flap-cell {
+    position: relative;
+    height: 24px;
+    width: 16px;
+    perspective: 300px;
+    background: #15151e;
+    /* border-radius: 2px; */
+    /* border: 1px solid #222; */
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .flap-char {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: #e8c84a;
+    background: #1a1a24;
+    backface-visibility: hidden;
+    text-shadow: 0 0 3px rgba(232, 200, 74, 0.3);
+    overflow: hidden;
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,0.5);
+  }
+
+  .flap-char::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 1px;
+    background: rgba(0,0,0,0.6);
+    z-index: 2;
+  }
+
+  .flap-char.spinning {
+    color: #fff;
+    text-shadow: 0 0 6px rgba(255,255,255,0.8);
+  }
+
+  .conn-status {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-size: 10px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .conn-status.online { color: #4a8; text-shadow: 0 0 4px rgba(68,170,136,0.5); }
+  .conn-status.offline { color: #a44; text-shadow: 0 0 4px rgba(170,68,68,0.5); }
+
+  /* ── Footer ─────────────────────────────── */
+  .footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #2a2a35;
+    text-align: center;
+    color: #888;
+    font-size: 12px;
+  }
+
+  .footer .copyright {
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .footer a {
+    color: white;
+    text-decoration: none;
+    transition: opacity 0.3s;
+  }
+
+  .footer a:hover {
+    opacity: 0.7;
+    text-decoration: underline;
+  }
+
+  /* ── MOBILE ─────────────────────────────────── */
+  @media (max-width: 800px) {
+    .board { padding: 8px; border-radius: 0; border-left: none; border-right: none; }
+    .col-headers { display: none; }
+
+    .flight-row {
+      display: grid !important;
+      grid-template-columns: 30px 42px 1fr 65px !important;
+      gap: 3px !important;
+      margin-bottom: 4px;
+      border-bottom: 1px solid #1a1a24;
+      padding-bottom: 4px;
+    }
+
+    .flight-row > div:nth-child(4),
+    .flight-row > div:nth-child(5) {
+      display: none !important;
+    }
+
+    .airline-logo {
+      height: 22px !important;
+      width: 30px !important;
+    }
+    
+    .airline-logo img {
+      max-height: 20px !important;
+      max-width: 28px !important;
+    }
+
+    .flap-cell {
+      height: 24px !important;
+      width: 16px !important;
+      min-width: 14px !important;
+    }
+
+    .flap-char { font-size: 13px !important; }
+
+    .datetime-header {
+      font-size: 13px;
+      text-align: center;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+
+    .conn-status {
+      position: static;
+      text-align: center;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .section-divider {
+      font-size: 11px;
+      padding: 2px 4px;
+      margin: 8px 0 2px 0;
+    }
+
+    .footer {
+      margin-top: 15px;
+      padding-top: 10px;
+      font-size: 10px;
+    }
+
+    .footer .copyright {
+      font-size: 10px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .flap-cell { height: 19px !important; width: 12px !important; min-width: 12px !important; }
+    .flap-char { font-size: 11px !important; }
+    .flight-row { grid-template-columns: 25px 36px 1fr 55px !important; }
+    .airline-logo { height: 19px !important; width: 25px !important; }
+    .airline-logo img { max-height: 17px !important; max-width: 23px !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="board" id="board">
+  <div class="conn-status offline" id="connStatus">OFFLINE</div>
+  <div class="datetime-header" id="datetime">--.--.-- --:--:--</div>
+
+  <div class="col-headers">
+    <span></span>
+    <span>Время</span>
+    <span>Направление</span>
+    <span>Рейс</span>
+    <span>Стойка</span>
+    <span>Статус</span>
+  </div>
+
+  <div class="flights" id="flights"></div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <p class="copyright">© 2026 ООО «ААА»</p>
+    <p style="margin-top: 5px; font-size: 0.75rem; opacity: 0.8;">
+      Разработка сайта: <a href="https://www.ziidik.ru" target="_blank" style="color: white;">VARTA_DEV</a>
+    </p>
+  </div>
+</div>
+
+<script>
+const API_BASE = 'http://172.17.0.19:3002';
+const URL_DEP = `${API_BASE}/get/xalTabloDU`;
+const URL_ARR = `${API_BASE}/get/xalTabloAR`;
+const URL_LIVERIES = `${API_BASE}/getImageAll`;
+const REFRESH_INTERVAL = 30000;
+const RETRY_DELAY = 5000;
+
+const COL_WIDTHS = { time:5, dest:22, flight:7, gate:5, status:22 };
+const CHARS = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-:., ";
+
+// Хранилище ливрей: ключ = company код (UT, SU, S7 и т.д.)
+let liveriesCache = new Map();
+
+class FlapChar {
+  constructor() {
+    this.el = document.createElement('div');
+    this.el.className = 'flap-cell';
+    this.inner = document.createElement('div');
+    this.inner.className = 'flap-char';
+    this.inner.textContent = ' ';
+    this.el.appendChild(this.inner);
+    this.currentVal = ' ';
+    this.isSpinning = false;
+  }
+
+  spinTo(targetChar) {
+    if (this.currentVal === targetChar && !this.isSpinning) return;
+    this.isSpinning = true;
+    this.inner.classList.add('spinning');
+    let iterations = 0;
+    const maxIterations = 3 + Math.floor(Math.random() * 5);
+    const interval = setInterval(() => {
+      this.inner.textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
+      iterations++;
+      if (iterations >= maxIterations) {
+        clearInterval(interval);
+        this.inner.textContent = targetChar;
+        this.inner.classList.remove('spinning');
+        this.currentVal = targetChar;
+        this.isSpinning = false;
+      }
+    }, 45);
+  }
+
+  get element() { return this.el; }
+}
+
+let currentRows = [];
+let isFirstLoad = true;
+let isOnline = false;
+let retryTimeout = null;
+let refreshInterval = null;
+
+window.addEventListener('online', handleNetworkChange);
+window.addEventListener('offline', handleNetworkChange);
+
+function handleNetworkChange() {
+  const statusEl = document.getElementById('connStatus');
+  if (navigator.onLine) {
+    statusEl.textContent = 'RECONNECTING...';
+    statusEl.className = 'conn-status offline';
+    clearTimeout(retryTimeout);
+    fetchAndRender();
+  } else {
+    statusEl.textContent = 'OFFLINE';
+    statusEl.className = 'conn-status offline';
+    isOnline = false;
+    if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
+  }
+}
+
+// Загрузка ливрей ОДИН РАЗ при старте
+async function loadLiveries() {
+  try {
+    console.log('Загрузка ливрей...');
+    const response = await fetch(URL_LIVERIES);
+    if (!response.ok) throw new Error('Failed to load liveries');
+    
+    const data = await response.json();
+    liveriesCache.clear();
+    
+    // Создаем маппинг: IATACODE -> base64 image
+    data.forEach(item => {
+      if (item.IATACODE && item.IMAGEB64TAIL) {
+        const imageUrl = `data:image/png;base64,${item.IMAGEB64TAIL}`;
+        liveriesCache.set(item.IATACODE.toUpperCase(), imageUrl);
+      }
+    });
+    
+    console.log(`✓ Загружено ${liveriesCache.size} ливрей`);
+  } catch (err) {
+    console.error('✗ Ошибка загрузки ливрей:', err);
+  }
+}
+
+// Получение URL ливреи по коду компании
+function getLiveryUrl(companyCode) {
+  if (!companyCode) return null;
+  const code = companyCode.toUpperCase().trim();
+  return liveriesCache.get(code) || null;
+}
+
+function createRowElement() {
+  const row = document.createElement('div');
+  row.className = 'flight-row';
+
+  // Колонка для логотипа
+  const logoDiv = document.createElement('div');
+  logoDiv.className = 'airline-logo';
+  row.appendChild(logoDiv);
+
+  const cols = ['time','dest','flight','gate','status'];
+  const rowChars = {};
+
+  cols.forEach(col => {
+    const colDiv = document.createElement('div');
+    colDiv.style.display = 'flex';
+    colDiv.style.gap = '1px';
+    const width = COL_WIDTHS[col];
+    const chars = [];
+    for (let i = 0; i < width; i++) {
+      const fc = new FlapChar();
+      colDiv.appendChild(fc.element);
+      chars.push(fc);
+    }
+    row.appendChild(colDiv);
+    rowChars[col] = chars;
+  });
+
+  return { el: row, chars: rowChars, logo: logoDiv };
+}
+
+function updateLogo(logoDiv, companyCode) {
+  const imageUrl = getLiveryUrl(companyCode);
+  logoDiv.innerHTML = '';
+  
+  if (imageUrl) {
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = companyCode || '';
+    img.title = companyCode || '';
+    logoDiv.appendChild(img);
+  }
+}
+
+function parseDestination(destStr) {
+  if (!destStr) return 'НЕИЗВЕСТНО'.padEnd(COL_WIDTHS.dest, ' ');
+  return destStr.split('%')[0].toUpperCase().padEnd(COL_WIDTHS.dest, ' ');
+}
+
+function getStatusDep(flight) {
+  if (flight.gate && flight.gate !== '-' && flight.gate !== '') return 'ПОСАДКА'.padEnd(COL_WIDTHS.status, ' ');
+  if (flight.desk && flight.desk !== '-' && flight.desk !== '') return 'РЕГИСТРАЦИЯ'.padEnd(COL_WIDTHS.status, ' ');
+  return 'ОЖИДАЕТСЯ'.padEnd(COL_WIDTHS.status, ' ');
+}
+
+function getStatusArr(flight) {
+  if (flight.timedelay && flight.time !== flight.timedelay) return 'ЗАДЕРЖАН'.padEnd(COL_WIDTHS.status, ' ');
+  return 'ПО РАСПИСАНИЮ'.padEnd(COL_WIDTHS.status, ' ');
+}
+
+function normalizeFlight(raw, type) {
+  const isDep = type === 'dep';
+  const company = (raw.company || '').trim();
+  const flight = (raw.flight || '').trim();
+  
+  return {
+    time: (raw.time || '--:--').padEnd(COL_WIDTHS.time, ' '),
+    dest: parseDestination(raw.dest),
+    flight: (company + ' ' + flight).trim().padEnd(COL_WIDTHS.flight, ' '),
+    gate: (isDep ? (raw.desk || raw.gate || '-') : (raw.hall || '-')).padEnd(COL_WIDTHS.gate, ' '),
+    status: isDep ? getStatusDep(raw) : getStatusArr(raw),
+    companyCode: company  // Используем поле company напрямую
+  };
+}
+
+async function fetchAndRender() {
+  const statusEl = document.getElementById('connStatus');
+  const container = document.getElementById('flights');
+  
+  try {
+    if (!navigator.onLine) throw new Error('Нет подключения к сети');
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    
+    const [depRes, arrRes] = await Promise.all([
+      fetch(URL_DEP, { signal: controller.signal }),
+      fetch(URL_ARR, { signal: controller.signal })
+    ]);
+    
+    clearTimeout(timeoutId);
+    
+    if (!depRes.ok || !arrRes.ok) throw new Error(`HTTP error: ${depRes.status}/${arrRes.status}`);
+    
+    const depData = await depRes.json();
+    const arrData = await arrRes.json();
+
+    if (!isOnline) {
+      isOnline = true;
+      if (refreshInterval) clearInterval(refreshInterval);
+      refreshInterval = setInterval(fetchAndRender, REFRESH_INTERVAL);
+    }
+    
+    statusEl.textContent = 'ONLINE';
+    statusEl.className = 'conn-status online';
+
+    const allFlights = [
+      ...arrData.map(d => ({...normalizeFlight(d, 'arr'), section: 'arr'})),
+      ...depData.map(d => ({...normalizeFlight(d, 'dep'), section: 'dep'}))
+    ];
+
+    if (isFirstLoad) {
+      container.innerHTML = '';
+      currentRows = [];
+      let lastSection = null;
+      let globalIndex = 0;
+
+      allFlights.forEach((f) => {
+        if (f.section !== lastSection) {
+          const divider = document.createElement('div');
+          divider.className = 'section-divider';
+          divider.textContent = f.section === 'arr' ? 'ПРИЛЕТ' : 'ВЫЛЕТ';
+          container.appendChild(divider);
+          lastSection = f.section;
+        }
+
+        const rowObj = createRowElement();
+        container.appendChild(rowObj.el);
+        
+        // Обновляем логотип по полю company
+        updateLogo(rowObj.logo, f.companyCode);
+        
+        currentRows.push({ obj: rowObj, data: f });
+        setTimeout(() => updateRowVisuals(rowObj, f), globalIndex * 60);
+        globalIndex++;
+      });
+      isFirstLoad = false;
+    } else {
+      currentRows.forEach((rowRef, i) => {
+        if (allFlights[i]) {
+          updateLogo(rowRef.obj.logo, allFlights[i].companyCode);
+          updateRowVisuals(rowRef.obj, allFlights[i]);
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Ошибка:', err);
+    if (err.name === 'AbortError') statusEl.textContent = 'TIMEOUT';
+    else if (err.message === 'Нет подключения к сети') statusEl.textContent = 'NO NETWORK';
+    else statusEl.textContent = 'ERROR';
+    statusEl.className = 'conn-status offline';
+    isOnline = false;
+    if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
+    clearTimeout(retryTimeout);
+    retryTimeout = setTimeout(fetchAndRender, RETRY_DELAY);
+  }
+}
+
+function updateRowVisuals(rowObj, data) {
+  ['time','dest','flight','gate','status'].forEach(col => {
+    const text = String(data[col] || '').toUpperCase();
+    const padded = text.padEnd(COL_WIDTHS[col], ' ');
+    rowObj.chars[col].forEach((cell, ci) => cell.spinTo(padded[ci]));
+  });
+}
+
+function updateClock() {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2,'0');
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mi = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('datetime').textContent = `${dd}.${mm}.${yy}  ${hh}:${mi}:${ss}`;
+}
+
+// Инициализация
+async function init() {
+  // Сначала загружаем ливреи ОДИН РАЗ
+  await loadLiveries();
+  
+  // Затем запускаем часы и табло
+  setInterval(updateClock, 1000);
+  updateClock();
+  fetchAndRender();
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Табло Аэропорта | Olive Design</title>
+<style>
+  /* ── 1. BASE & COLORS (Olive Theme) ───────────── */
+  :root {
+    --bg-color: #3b4d2e;       /* Темно-оливковый с картинки */
+    --accent-color: #ffffff;   /* Белый */
+    --dim-color: rgba(255, 255, 255, 0.6);
+    --border-color: rgba(255, 255, 255, 0.3);
+    --cell-bg: rgba(0, 0, 0, 0.15);
+    --font-main: 'Courier New', Courier, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-color);
+    color: var(--accent-color);
+    font-family: var(--font-main);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* ── 2. BOARD CONTAINER ───────────────────────── */
+  .board {
+    width: 100%;
+    max-width: 1400px;
+    background: transparent;
+    border: 2px solid var(--accent-color); /* Строгая рамка */
+    padding: 30px;
+    position: relative;
+    box-shadow: 0 0 0 4px var(--bg-color), 0 0 0 6px var(--border-color); /* Двойная рамка */
+  }
+
+  /* Декоративные уголки (как на знаках) */
+  .board::before, .board::after {
+    content: '';
+    position: absolute;
+    width: 20px; height: 20px;
+    border: 2px solid var(--accent-color);
+    transition: all 0.3s;
+  }
+  .board::before { top: -6px; left: -6px; border-right: none; border-bottom: none; }
+  .board::after { bottom: -6px; right: -6px; border-left: none; border-top: none; }
+
+  /* ── 3. HEADER & CLOCK ────────────────────────── */
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 15px;
+  }
+
+  .datetime-header {
+    font-size: 28px;
+    letter-spacing: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .conn-status {
+    font-size: 12px;
+    letter-spacing: 2px;
+    padding: 4px 8px;
+    border: 1px solid var(--accent-color);
+    text-transform: uppercase;
+  }
+  .conn-status.online { background: var(--accent-color); color: var(--bg-color); }
+  .conn-status.offline { border-color: #a44; color: #a44; }
+
+  /* ── 4. COLUMN HEADERS ────────────────────────── */
+  .col-headers {
+    display: grid;
+    grid-template-columns: 90px 1fr 110px 80px 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+  }
+  .col-headers span {
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--dim-color);
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  /* ── 5. SECTION DIVIDERS ──────────────────────── */
+  .section-divider {
+    margin: 30px 0 15px 0;
+    padding: 10px 0;
+    border-bottom: 2px solid var(--accent-color);
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 4px;
+    color: var(--accent-color);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  /* Декоративная стрелка/ромб перед заголовком */
+  .section-divider::before {
+    content: '◆'; 
+    font-size: 16px;
+  }
+
+  /* ── 6. FLIGHT ROWS ───────────────────────────── */
+  .flights {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .flight-row {
+    display: grid;
+    grid-template-columns: 90px 1fr 110px 80px 1fr;
+    gap: 8px;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px dashed var(--border-color); /* Пунктирная линия как на картах */
+  }
+  .flight-row:last-child { border-bottom: none; }
+
+  /* ── 7. CHARACTER CELLS (Minimalist) ──────────── */
+  .flap-cell {
+    position: relative;
+    height: 42px;
+    width: 26px;
+    background: var(--cell-bg);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Убраны скругления для строгого стиля */
+    border-radius: 0; 
+  }
+
+  .flap-char {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--accent-color);
+    line-height: 1;
+    user-select: none;
+    text-shadow: 0 0 2px rgba(255,255,255,0.2);
+  }
+
+  /* Линия посередине (тонкая) */
+  .flap-cell::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+    pointer-events: none;
+  }
+
+  /* Анимация перебора */
+  .flap-char.spinning {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+
+  /* ── 8. MOBILE ADAPTATION ─────────────────────── */
+  @media (max-width: 900px) {
+    .board { padding: 15px; border-width: 1px; }
+    .col-headers { display: none; }
+    
+    .flight-row {
+      grid-template-columns: 50px 1fr 80px !important; 
+      gap: 4px !important;
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    /* Скрываем Рейс и Стойку */
+    .flight-row > div:nth-child(3),
+    .flight-row > div:nth-child(4) {
+      display: none !important;
+    }
+
+    .flap-cell {
+      height: 34px !important;
+      width: 20px !important;
+      min-width: 20px !important;
+    }
+    .flap-char { font-size: 18px !important; }
+    
+    .datetime-header { font-size: 20px; text-align: center; width: 100%; }
+    .top-bar { flex-direction: column; align-items: center; gap: 10px; border-bottom: none; margin-bottom: 20px;}
+    
+    .section-divider { font-size: 16px; margin-top: 20px; }
+  }
+
+  @media (max-width: 400px) {
+    .flap-cell { height: 28px !important; width: 16px !important; min-width: 16px !important; }
+    .flap-char { font-size: 14px !important; }
+    .flight-row { grid-template-columns: 40px 1fr 70px !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="board" id="board">
+  <div class="top-bar">
+    <div class="conn-status offline" id="connStatus">OFFLINE</div>
+    <div class="datetime-header" id="datetime">--.--.-- --:--:--</div>
+  </div>
+
+  <div class="col-headers">
+    <span>Время</span>
+    <span>Направление</span>
+    <span>Рейс</span>
+    <span>Стойка</span>
+    <span>Статус</span>
+  </div>
+
+  <div class="flights" id="flights"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  CONFIGURATION
+// ═════════════════════════════════════════════════
+const API_BASE = 'http://172.17.0.19:3002';
+const URL_DEP = `${API_BASE}/get/xalTabloDU`;
+const URL_ARR = `${API_BASE}/get/xalTabloAR`;
+const REFRESH_INTERVAL = 30000; // 30 секунд
+
+// Ширина колонок в символах
+const COL_WIDTHS = { time:5, dest:14, flight:7, gate:5, status:14 };
+const CHARS = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-:., ";
+
+// ═════════════════════════════════════════════════
+//  COMPONENT: Single Character Flap
+// ═════════════════════════════════════════════════
+class FlapChar {
+  constructor() {
+    this.el = document.createElement('div');
+    this.el.className = 'flap-cell';
+    
+    this.inner = document.createElement('div');
+    this.inner.className = 'flap-char';
+    this.inner.textContent = ' '; 
+    
+    this.el.appendChild(this.inner);
+    this.currentVal = ' ';
+    this.isSpinning = false;
+  }
+
+  spinTo(targetChar) {
+    if (this.currentVal === targetChar && !this.isSpinning) return;
+    
+    this.isSpinning = true;
+    this.inner.classList.add('spinning');
+    
+    let iterations = 0;
+    const maxIterations = 2 + Math.floor(Math.random() * 4); 
+    
+    const interval = setInterval(() => {
+      this.inner.textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
+      iterations++;
+      
+      if (iterations >= maxIterations) {
+        clearInterval(interval);
+        this.inner.textContent = targetChar;
+        this.inner.classList.remove('spinning');
+        this.currentVal = targetChar;
+        this.isSpinning = false;
+      }
+    }, 50);
+  }
+
+  get element() { return this.el; }
+}
+
+// ══════════════════════════════════════════════════
+//  STATE MANAGEMENT
+// ══════════════════════════════════════════════════
+let currentRows = []; 
+let isFirstLoad = true;
+
+function createRowElement() {
+  const row = document.createElement('div');
+  row.className = 'flight-row';
+
+  const cols = ['time','dest','flight','gate','status'];
+  const rowChars = {};
+
+  cols.forEach(col => {
+    const colDiv = document.createElement('div');
+    colDiv.style.display = 'flex';
+    colDiv.style.gap = '2px';
+
+    const width = COL_WIDTHS[col];
+    const chars = [];
+    
+    for (let i = 0; i < width; i++) {
+      const fc = new FlapChar();
+      colDiv.appendChild(fc.element);
+      chars.push(fc);
+    }
+
+    row.appendChild(colDiv);
+    rowChars[col] = chars;
+  });
+
+  return { el: row, chars: rowChars };
+}
+
+// ══════════════════════════════════════════════════
+//  DATA PARSING LOGIC
+// ══════════════════════════════════════════════════
+function parseDestination(destStr) {
+  if (!destStr) return 'НЕИЗВЕСТНО';
+  // Берем только русскую часть до %
+  const ruPart = destStr.split('%')[0].toUpperCase();
+  return ruPart.padEnd(COL_WIDTHS.dest, ' ');
+}
+
+function getStatusDep(flight) {
+  // Логика для вылетов
+  if (flight.gate && flight.gate !== '-' && flight.gate !== '') {
+    return ('ПОСАДКА ' + (flight.gate || '')).padEnd(COL_WIDTHS.status, ' ');
+  }
+  if (flight.desk && flight.desk !== '-' && flight.desk !== '') {
+    return ('РЕГИСТР ' + (flight.desk || '')).padEnd(COL_WIDTHS.status, ' ');
+  }
+  return 'ОЖИДАЕТСЯ'.padEnd(COL_WIDTHS.status, ' ');
+}
+
+function getStatusArr(flight) {
+  // Логика для прилетов
+  if (flight.timedelay && flight.time !== flight.timedelay) {
+    return ('ЗАДЕРЖАН ' + flight.timedelay).padEnd(COL_WIDTHS.status, ' ');
+  }
+  return 'ПО РАСПИСАНИЮ'.padEnd(COL_WIDTHS.status, ' ');
+}
+
+function normalizeFlight(raw, type) {
+  const isDep = type === 'dep';
+  return {
+    time: (raw.time || '--:--').padEnd(COL_WIDTHS.time, ' '),
+    dest: parseDestination(raw.dest),
+    flight: ((raw.company || '') + ' ' + (raw.flight || '')).trim().padEnd(COL_WIDTHS.flight, ' '),
+    // Для вылетов показываем Gate/Desk, для прилетов Hall
+    gate: (isDep ? (raw.gate || raw.desk || '-') : (raw.hall || '-')).padEnd(COL_WIDTHS.gate, ' '),
+    status: isDep ? getStatusDep(raw) : getStatusArr(raw)
+  };
+}
+
+// ══════════════════════════════════════════════════
+//  FETCH & RENDER
+// ══════════════════════════════════════════════════
+async function fetchAndRender() {
+  const statusEl = document.getElementById('connStatus');
+  const container = document.getElementById('flights');
+
+  try {
+    const [depRes, arrRes] = await Promise.all([fetch(URL_DEP), fetch(URL_ARR)]);
+    if (!depRes.ok || !arrRes.ok) throw new Error('Server error');
+
+    const depData = await depRes.json();
+    const arrData = await arrRes.json();
+
+    statusEl.textContent = 'ONLINE';
+    statusEl.className = 'conn-status online';
+
+    // Объединяем: Сначала Прилет, потом Вылет
+    const allFlights = [
+      ...arrData.map(d => ({...normalizeFlight(d, 'arr'), section: 'arr'})),
+      ...depData.map(d => ({...normalizeFlight(d, 'dep'), section: 'dep'}))
+    ];
+
+    if (isFirstLoad) {
+      container.innerHTML = '';
+      currentRows = [];
+      let lastSection = null;
+      let globalIndex = 0;
+
+      allFlights.forEach((f) => {
+        // Вставляем разделитель секций
+        if (f.section !== lastSection) {
+          const divider = document.createElement('div');
+          divider.className = 'section-divider';
+          divider.textContent = f.section === 'arr' ? 'ПРИЛЕТ' : 'ВЫЛЕТ';
+          container.appendChild(divider);
+          lastSection = f.section;
+        }
+
+        const rowObj = createRowElement();
+        container.appendChild(rowObj.el);
+        currentRows.push({ obj: rowObj, data: f });
+        
+        // Эффект волны при загрузке
+        setTimeout(() => updateRowVisuals(rowObj, f), globalIndex * 60);
+        globalIndex++;
+      });
+      isFirstLoad = false;
+
+    } else {
+      // Обновление данных без перерисовки DOM
+      currentRows.forEach((rowRef, i) => {
+        if (allFlights[i]) updateRowVisuals(rowRef.obj, allFlights[i]);
+      });
+    }
+
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'OFFLINE';
+    statusEl.className = 'conn-status offline';
+  }
+}
+
+function updateRowVisuals(rowObj, data) {
+  ['time','dest','flight','gate','status'].forEach(col => {
+    const text = String(data[col] || '').toUpperCase();
+    const width = COL_WIDTHS[col];
+    const padded = text.padEnd(width, ' ');
+    const cells = rowObj.chars[col];
+    cells.forEach((cell, ci) => cell.spinTo(padded[ci]));
+  });
+}
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2,'0');
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mi = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('datetime').textContent = `${dd}.${mm}.${yy}  ${hh}:${mi}:${ss}`;
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+
+// Первый запуск
+fetchAndRender();
+// Автообновление
+setInterval(fetchAndRender, REFRESH_INTERVAL);
+</script>
+</body>
+</html>
