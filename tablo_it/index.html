@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
 <title>Табло Аэропорта | Live API</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -14,14 +15,14 @@
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: center;
+    /* align-items: center; */
     padding: 10px;
     overflow-x: hidden;
   }
 
   .board {
     width: 100%;
-    max-width: 1300px;
+    max-width: 1400px;
     background: linear-gradient(180deg, #0f0f16 0%, #08080c 100%);
     border: 1px solid #2a2a35;
     border-radius: 4px;
@@ -43,26 +44,49 @@
     border-radius: 4px;
   }
 
+  /* Верхняя панель с часами и погодой */
+  .top-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 12px;
+    padding-right: 5px;
+  }
+
   .datetime-header {
-    text-align: right;
-    font-size: 30px;
+    font-size: 40px;
     letter-spacing: 3px;
     color: #e8c84a;
-    margin-bottom: 12px;
     text-shadow: 0 0 4px rgba(232, 200, 74, 0.4);
     font-weight: bold;
   }
 
+  .weather-widget {
+    display: flex;
+    align-items: center;
+    /* padding-left: 50px; */
+    gap: 15px;
+    font-size: 40px;
+    color: #b8a83a;
+    text-shadow: 0 0 4px rgba(184, 168, 58, 0.3);
+  }
+  
+  .weather-temp {
+    font-weight: bold;
+    font-size: 60px;
+    /* color: #fff; */
+  }
+
   .col-headers {
     display: grid;
-    grid-template-columns: 40px 60px 1fr 80px 55px 1fr;
+    grid-template-columns: 40px 60px 1fr 80px 55px 2fr; 
     gap: 3px;
     margin-bottom: 5px;
     border-bottom: 2px solid #333;
     padding-bottom: 3px;
   }
   .col-headers span {
-    font-size: 22px;
+    font-size: 18px;
     letter-spacing: 1px;
     color: #b8a83a;
     text-transform: uppercase;
@@ -76,7 +100,7 @@
     padding: 2px 5px;
     background: #15151e;
     border-left: 3px solid #e8c84a;
-    font-size: 13px;
+    font-size: 23px;
     font-weight: bold;
     letter-spacing: 2px;
     color: #fff;
@@ -87,17 +111,15 @@
   .flights {
     display: flex;
     flex-direction: column;
-    /* gap: 4px; */
   }
 
   .flight-row {
     display: grid;
-    grid-template-columns: 40px 60px 1fr 80px 55px 1fr;
+    grid-template-columns: 40px 60px 1fr 80px 55px 2fr;
     gap: 15px;
     align-items: center;
   }
 
-  /* ── Логотип авиакомпании ────────────── */
   .airline-logo {
     display: flex;
     align-items: center;
@@ -113,15 +135,12 @@
     filter: drop-shadow(0 0 2px rgba(232, 200, 74, 0.3));
   }
 
-  /* ── Split-Flap ячейки ────────────── */
   .flap-cell {
     position: relative;
     height: 24px;
     width: 16px;
     perspective: 300px;
     background: #15151e;
-    /* border-radius: 2px; */
-    /* border: 1px solid #222; */
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -160,6 +179,42 @@
     text-shadow: 0 0 6px rgba(255,255,255,0.8);
   }
 
+  /* ── СТАТУС (Бегущая строка УРАБОРОС) ────────────── */
+  .status-container {
+    height: 24px;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    background: #15151e;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+  }
+
+  .marquee-wrapper {
+    display: flex;
+    white-space: nowrap;
+    will-change: transform;
+  }
+
+  .status-text {
+    font-size: 20px;
+    font-weight: bold;
+    color: #e8c84a;
+    text-shadow: 0 0 3px rgba(232, 200, 74, 0.3);
+    padding-right: 50px;
+    display: inline-block;
+  }
+
+  @keyframes scroll-infinite {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .scrolling .marquee-wrapper {
+    animation: scroll-infinite 15s linear infinite;
+  }
+
   .conn-status {
     position: absolute;
     top: 12px;
@@ -172,7 +227,6 @@
   .conn-status.online { color: #4a8; text-shadow: 0 0 4px rgba(68,170,136,0.5); }
   .conn-status.offline { color: #a44; text-shadow: 0 0 4px rgba(170,68,68,0.5); }
 
-  /* ── Footer ─────────────────────────────── */
   .footer {
     margin-top: 20px;
     padding-top: 15px;
@@ -182,25 +236,27 @@
     font-size: 12px;
   }
 
-  .footer .copyright {
-    margin: 0;
-    font-size: 12px;
-  }
+  .footer .copyright { margin: 0; font-size: 12px; }
+  .footer a { color: white; text-decoration: none; transition: opacity 0.3s; }
+  .footer a:hover { opacity: 0.7; text-decoration: underline; }
 
-  .footer a {
-    color: white;
-    text-decoration: none;
-    transition: opacity 0.3s;
-  }
-
-  .footer a:hover {
-    opacity: 0.7;
-    text-decoration: underline;
-  }
-
-  /* ── MOBILE ─────────────────────────────────── */
   @media (max-width: 800px) {
     .board { padding: 8px; border-radius: 0; border-left: none; border-right: none; }
+    
+    .top-panel {
+        flex-direction: column-reverse;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .weather-widget {
+        font-size: 18px;
+    }
+    
+    .weather-temp {
+        font-size: 50px;
+    }
+
     .col-headers { display: none; }
 
     .flight-row {
@@ -217,53 +273,16 @@
       display: none !important;
     }
 
-    .airline-logo {
-      height: 22px !important;
-      width: 30px !important;
-    }
-    
-    .airline-logo img {
-      max-height: 20px !important;
-      max-width: 28px !important;
-    }
-
-    .flap-cell {
-      height: 24px !important;
-      width: 16px !important;
-      min-width: 14px !important;
-    }
-
+    .airline-logo { height: 22px !important; width: 30px !important; }
+    .airline-logo img { max-height: 20px !important; max-width: 28px !important; }
+    .flap-cell { height: 24px !important; width: 16px !important; min-width: 14px !important; }
     .flap-char { font-size: 13px !important; }
-
-    .datetime-header {
-      font-size: 13px;
-      text-align: center;
-      margin-bottom: 10px;
-      letter-spacing: 2px;
-    }
-
-    .conn-status {
-      position: static;
-      text-align: center;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .section-divider {
-      font-size: 11px;
-      padding: 2px 4px;
-      margin: 8px 0 2px 0;
-    }
-
-    .footer {
-      margin-top: 15px;
-      padding-top: 10px;
-      font-size: 10px;
-    }
-
-    .footer .copyright {
-      font-size: 10px;
-    }
+    
+    .datetime-header { font-size: 32px; text-align: center; letter-spacing: 2px; }
+    .conn-status { position: static; text-align: center; margin-bottom: 8px; display: block; }
+    .section-divider { font-size: 21px; padding: 2px 4px; margin: 8px 0 2px 0; }
+    .footer { margin-top: 15px; padding-top: 10px; font-size: 10px; }
+    .footer .copyright { font-size: 10px; }
   }
 
   @media (max-width: 380px) {
@@ -279,24 +298,31 @@
 
 <div class="board" id="board">
   <div class="conn-status offline" id="connStatus">OFFLINE</div>
-  <div class="datetime-header" id="datetime">--.--.-- --:--:--</div>
+  
+  <!-- Верхняя панель: Часы и Погода -->
+  <div class="top-panel">
+      <div class="weather-widget" id="weather">
+          <span>--°C</span>
+          <span style="font-size: 0.6em; opacity: 0.8;">--</span>
+      </div>
+      <div class="datetime-header" id="datetime">--.--.-- --:--:--</div>
+  </div>
 
   <div class="col-headers">
     <span></span>
     <span>Время</span>
     <span>Направление</span>
     <span>Рейс</span>
-    <span>Стойка</span>
+    <span>Терм./Ст.</span>
     <span>Статус</span>
   </div>
 
   <div class="flights" id="flights"></div>
 
-  <!-- Footer -->
   <div class="footer">
     <p class="copyright">© 2026 ООО «ААА»</p>
     <p style="margin-top: 5px; font-size: 0.75rem; opacity: 0.8;">
-      Разработка сайта: <a href="https://www.ziidik.ru" target="_blank" style="color: white;">VARTA_DEV</a>
+      Разработка сайта: <a href="https://ziidik.ru" target="_blank" style="color: white;">VARTA_DEV</a>
     </p>
   </div>
 </div>
@@ -306,14 +332,17 @@ const API_BASE = 'http://172.17.0.19:3002';
 const URL_DEP = `${API_BASE}/get/xalTabloDU`;
 const URL_ARR = `${API_BASE}/get/xalTabloAR`;
 const URL_LIVERIES = `${API_BASE}/getImageAll`;
-const REFRESH_INTERVAL = 30000;
+const URL_WEATHER = 'http://172.17.0.19:3025/getTemp'; // API погоды
+
+// Обновление табло раз в час (3600000 мс)
+const REFRESH_INTERVAL = 3600000; 
 const RETRY_DELAY = 5000;
 
-const COL_WIDTHS = { time:5, dest:22, flight:7, gate:5, status:22 };
+const COL_WIDTHS = { time:5, dest:15, flight:7, gate:5 }; 
 const CHARS = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-:., ";
 
-// Хранилище ливрей: ключ = company код (UT, SU, S7 и т.д.)
 let liveriesCache = new Map();
+let previousFlightsData = null; 
 
 class FlapChar {
   constructor() {
@@ -350,7 +379,6 @@ class FlapChar {
 }
 
 let currentRows = [];
-let isFirstLoad = true;
 let isOnline = false;
 let retryTimeout = null;
 let refreshInterval = null;
@@ -373,47 +401,59 @@ function handleNetworkChange() {
   }
 }
 
-// Загрузка ливрей ОДИН РАЗ при старте
 async function loadLiveries() {
   try {
-    console.log('Загрузка ливрей...');
     const response = await fetch(URL_LIVERIES);
     if (!response.ok) throw new Error('Failed to load liveries');
-    
     const data = await response.json();
     liveriesCache.clear();
-    
-    // Создаем маппинг: IATACODE -> base64 image
     data.forEach(item => {
       if (item.IATACODE && item.IMAGEB64TAIL) {
         const imageUrl = `data:image/png;base64,${item.IMAGEB64TAIL}`;
         liveriesCache.set(item.IATACODE.toUpperCase(), imageUrl);
       }
     });
-    
-    console.log(`✓ Загружено ${liveriesCache.size} ливрей`);
-  } catch (err) {
-    console.error('✗ Ошибка загрузки ливрей:', err);
-  }
+  } catch (err) { console.error('Ошибка загрузки ливрей:', err); }
 }
 
-// Получение URL ливреи по коду компании
+// Функция загрузки погоды
+async function loadWeather() {
+    try {
+        const response = await fetch(URL_WEATHER);
+        if (!response.ok) throw new Error('Weather API error');
+        const data = await response.json();
+        
+        if (data.weather) {
+            const temp = data.weather.temperature;
+            const desc = data.metaDescription || data.weather.airportName || '';
+            
+            const weatherEl = document.getElementById('weather');
+            if (weatherEl) {
+                weatherEl.innerHTML = `
+                    <span class="weather-temp">${temp}°C</span>
+                    <span style="font-size: 0.5em; opacity: 0.9; text-transform: uppercase;">${desc}</span>
+                `;
+            }
+        }
+    } catch (err) {
+        console.error('Ошибка загрузки погоды:', err);
+    }
+}
+
 function getLiveryUrl(companyCode) {
   if (!companyCode) return null;
-  const code = companyCode.toUpperCase().trim();
-  return liveriesCache.get(code) || null;
+  return liveriesCache.get(companyCode.toUpperCase().trim()) || null;
 }
 
 function createRowElement() {
   const row = document.createElement('div');
   row.className = 'flight-row';
 
-  // Колонка для логотипа
   const logoDiv = document.createElement('div');
   logoDiv.className = 'airline-logo';
   row.appendChild(logoDiv);
 
-  const cols = ['time','dest','flight','gate','status'];
+  const cols = ['time','dest','flight','gate'];
   const rowChars = {};
 
   cols.forEach(col => {
@@ -431,18 +471,36 @@ function createRowElement() {
     rowChars[col] = chars;
   });
 
-  return { el: row, chars: rowChars, logo: logoDiv };
+  const statusContainer = document.createElement('div');
+  statusContainer.className = 'status-container';
+  
+  const marqueeWrapper = document.createElement('div');
+  marqueeWrapper.className = 'marquee-wrapper';
+  
+  const text1 = document.createElement('span');
+  text1.className = 'status-text';
+  const text2 = document.createElement('span');
+  text2.className = 'status-text';
+  
+  marqueeWrapper.appendChild(text1);
+  marqueeWrapper.appendChild(text2);
+  statusContainer.appendChild(marqueeWrapper);
+  
+  row.appendChild(statusContainer);
+
+  return { el: row, chars: rowChars, logo: logoDiv, statusWrap: marqueeWrapper };
 }
 
 function updateLogo(logoDiv, companyCode) {
   const imageUrl = getLiveryUrl(companyCode);
+  const existingImg = logoDiv.querySelector('img');
+  if (existingImg && existingImg.src === imageUrl) return;
+
   logoDiv.innerHTML = '';
-  
   if (imageUrl) {
     const img = document.createElement('img');
     img.src = imageUrl;
     img.alt = companyCode || '';
-    img.title = companyCode || '';
     logoDiv.appendChild(img);
   }
 }
@@ -453,106 +511,134 @@ function parseDestination(destStr) {
 }
 
 function getStatusDep(flight) {
-  if (flight.gate && flight.gate !== '-' && flight.gate !== '') return 'ПОСАДКА'.padEnd(COL_WIDTHS.status, ' ');
-  if (flight.desk && flight.desk !== '-' && flight.desk !== '') return 'РЕГИСТРАЦИЯ'.padEnd(COL_WIDTHS.status, ' ');
-  return 'ОЖИДАЕТСЯ'.padEnd(COL_WIDTHS.status, ' ');
+  let parts = [];
+
+  // 1. Обработка задержки
+  if (flight.timedelay && flight.time !== flight.timedelay) {
+    let delayText = flight.codedelay ? flight.codedelay.replace(/[^а-яА-Яa-zA-Z0-9\s]/g, '').trim() : 'Задержан';
+    
+    if (delayText.toLowerCase().includes('поздн')) {
+        delayText = "Позднее прибытие";
+    }
+    
+    parts.push(`${delayText} | Задержан до ${flight.timedelay}`);
+  } 
+  // 2. Если задержки нет, проверяем статусы регистрации/посадки
+  else {
+      if (flight.ex_chkdone === 'DONE') {
+          if (flight.tbrdbegin || flight.boarding) {
+             parts.push("Посадка");
+          }
+      } else if (flight.checking) {
+          parts.push("Регистрация");
+      }
+  }
+
+  return parts.join(' ');
 }
 
 function getStatusArr(flight) {
-  if (flight.timedelay && flight.time !== flight.timedelay) return 'ЗАДЕРЖАН'.padEnd(COL_WIDTHS.status, ' ');
-  return 'ПО РАСПИСАНИЮ'.padEnd(COL_WIDTHS.status, ' ');
+  if (flight.timedelay && flight.time !== flight.timedelay) {
+    if (flight.timedelay > flight.time) {
+      let delayText = flight.codedelay ? flight.codedelay.replace(/[^а-яА-Яa-zA-Z0-9\s]/g, '').trim() : 'ЗАДЕРЖАН';
+      return `${delayText} ${flight.timedelay}`;
+    } else {
+      return `ОЖИДАЕТСЯ В ${flight.timedelay}`;
+    }
+  }
+  if (flight.tookoff) {
+    if (flight.tookoff === 'ВЫЛ') return 'В ПУТИ';
+    if (flight.tookoff === 'НЕВ') return 'НЕ ВЫЛЕТЕЛ';
+  }
 }
 
 function normalizeFlight(raw, type) {
   const isDep = type === 'dep';
   const company = (raw.company || '').trim();
-  const flight = (raw.flight || '').trim();
-  
+  const flightNum = (raw.flight || '').trim();
   return {
     time: (raw.time || '--:--').padEnd(COL_WIDTHS.time, ' '),
     dest: parseDestination(raw.dest),
-    flight: (company + ' ' + flight).trim().padEnd(COL_WIDTHS.flight, ' '),
-    gate: (isDep ? (raw.desk || raw.gate || '-') : (raw.hall || '-')).padEnd(COL_WIDTHS.gate, ' '),
+    flight: (company + ' ' + flightNum).trim().padEnd(COL_WIDTHS.flight, ' '),
+    gate: (isDep 
+    ? ((raw.hall ? raw.hall + (raw.desk && raw.desk !== '-' ? ' / ' + raw.desk : '') : (raw.desk || '-'))) 
+    : (raw.hall || '-')
+).padEnd(COL_WIDTHS.gate, ' '),
     status: isDep ? getStatusDep(raw) : getStatusArr(raw),
-    companyCode: company  // Используем поле company напрямую
+    companyCode: company
   };
+}
+
+function getFlightKey(flight) {
+  return `${flight.flight}|${flight.time}|${flight.dest}`;
 }
 
 async function fetchAndRender() {
   const statusEl = document.getElementById('connStatus');
   const container = document.getElementById('flights');
-  
   try {
     if (!navigator.onLine) throw new Error('Нет подключения к сети');
-    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
     const [depRes, arrRes] = await Promise.all([
       fetch(URL_DEP, { signal: controller.signal }),
       fetch(URL_ARR, { signal: controller.signal })
     ]);
-    
     clearTimeout(timeoutId);
-    
-    if (!depRes.ok || !arrRes.ok) throw new Error(`HTTP error: ${depRes.status}/${arrRes.status}`);
+    if (!depRes.ok || !arrRes.ok) throw new Error(`HTTP error`);
     
     const depData = await depRes.json();
     const arrData = await arrRes.json();
+
+    const allFlights = [
+        ...depData.map(d => ({...normalizeFlight(d, 'dep'), section: 'dep'})),
+      ...arrData.map(d => ({...normalizeFlight(d, 'arr'), section: 'arr'}))
+    ];
+
+    const currentDataString = JSON.stringify(allFlights.map(f => ({
+      f: f.flight, t: f.time, d: f.dest, s: f.status, g: f.gate
+    })));
+
+    if (previousFlightsData === currentDataString) {
+      return; 
+    }
+
+    previousFlightsData = currentDataString;
 
     if (!isOnline) {
       isOnline = true;
       if (refreshInterval) clearInterval(refreshInterval);
       refreshInterval = setInterval(fetchAndRender, REFRESH_INTERVAL);
     }
-    
     statusEl.textContent = 'ONLINE';
     statusEl.className = 'conn-status online';
 
-    const allFlights = [
-      ...arrData.map(d => ({...normalizeFlight(d, 'arr'), section: 'arr'})),
-      ...depData.map(d => ({...normalizeFlight(d, 'dep'), section: 'dep'}))
-    ];
+    container.innerHTML = '';
+    currentRows = [];
+    let lastSection = null;
+    let globalIndex = 0;
 
-    if (isFirstLoad) {
-      container.innerHTML = '';
-      currentRows = [];
-      let lastSection = null;
-      let globalIndex = 0;
-
-      allFlights.forEach((f) => {
-        if (f.section !== lastSection) {
-          const divider = document.createElement('div');
-          divider.className = 'section-divider';
-          divider.textContent = f.section === 'arr' ? 'ПРИЛЕТ' : 'ВЫЛЕТ';
-          container.appendChild(divider);
-          lastSection = f.section;
-        }
-
-        const rowObj = createRowElement();
-        container.appendChild(rowObj.el);
-        
-        // Обновляем логотип по полю company
-        updateLogo(rowObj.logo, f.companyCode);
-        
-        currentRows.push({ obj: rowObj, data: f });
-        setTimeout(() => updateRowVisuals(rowObj, f), globalIndex * 60);
-        globalIndex++;
-      });
-      isFirstLoad = false;
-    } else {
-      currentRows.forEach((rowRef, i) => {
-        if (allFlights[i]) {
-          updateLogo(rowRef.obj.logo, allFlights[i].companyCode);
-          updateRowVisuals(rowRef.obj, allFlights[i]);
-        }
-      });
-    }
+    allFlights.forEach((f) => {
+      if (f.section !== lastSection) {
+        const divider = document.createElement('div');
+        divider.className = 'section-divider';
+        divider.textContent = f.section === 'arr' ? 'ПРИЛЕТ' : 'ВЫЛЕТ';
+        container.appendChild(divider);
+        lastSection = f.section;
+      }
+      const rowObj = createRowElement();
+      container.appendChild(rowObj.el);
+      updateLogo(rowObj.logo, f.companyCode);
+      
+      rowObj.el.dataset.flightKey = getFlightKey(f);
+      
+      currentRows.push({ obj: rowObj, data: f });
+      setTimeout(() => updateRowVisuals(rowObj, f), globalIndex * 40);
+      globalIndex++;
+    });
   } catch (err) {
     console.error('Ошибка:', err);
-    if (err.name === 'AbortError') statusEl.textContent = 'TIMEOUT';
-    else if (err.message === 'Нет подключения к сети') statusEl.textContent = 'NO NETWORK';
-    else statusEl.textContent = 'ERROR';
+    statusEl.textContent = 'ERROR';
     statusEl.className = 'conn-status offline';
     isOnline = false;
     if (refreshInterval) { clearInterval(refreshInterval); refreshInterval = null; }
@@ -562,11 +648,28 @@ async function fetchAndRender() {
 }
 
 function updateRowVisuals(rowObj, data) {
-  ['time','dest','flight','gate','status'].forEach(col => {
+  ['time','dest','flight','gate'].forEach(col => {
     const text = String(data[col] || '').toUpperCase();
     const padded = text.padEnd(COL_WIDTHS[col], ' ');
     rowObj.chars[col].forEach((cell, ci) => cell.spinTo(padded[ci]));
   });
+
+  const statusText = String(data.status || '').toUpperCase();
+  const wrapper = rowObj.statusWrap;
+  const spans = wrapper.querySelectorAll('.status-text');
+  
+  const currentText = spans[0] ? spans[0].textContent.trim() : '';
+  
+  if (currentText !== statusText) {
+      if (statusText.length > 25) {
+        spans.forEach(span => span.textContent = statusText + '     ');
+        wrapper.parentElement.classList.add('scrolling');
+      } else {
+        wrapper.parentElement.classList.remove('scrolling');
+        if (spans[0]) spans[0].textContent = statusText;
+        if (spans[1]) spans[1].textContent = '';
+      }
+  }
 }
 
 function updateClock() {
@@ -580,12 +683,13 @@ function updateClock() {
   document.getElementById('datetime').textContent = `${dd}.${mm}.${yy}  ${hh}:${mi}:${ss}`;
 }
 
-// Инициализация
 async function init() {
-  // Сначала загружаем ливреи ОДИН РАЗ
   await loadLiveries();
+  await loadWeather(); // Загружаем погоду при старте
   
-  // Затем запускаем часы и табло
+  // Обновляем погоду каждые 15 минут (независимо от табло)
+  setInterval(loadWeather, 900000); 
+  
   setInterval(updateClock, 1000);
   updateClock();
   fetchAndRender();
