@@ -1,13 +1,14 @@
 <script lang="ts">
   import Menu from './lib/screens/Menu.svelte';
   import Game from './lib/screens/Pong.svelte';
-
+  import Tablo from './lib/screens/Tablo.svelte';
   type Screen = 'menu' | 'game';
   let screen = $state<Screen>('menu');
 </script>
 
 {#if screen === 'menu'}
-  <Menu onStart={() => screen = 'game'} />
+  <!-- <Menu onStart={() => screen = 'game'} /> -->
+    <Tablo onExit={() => screen = 'menu'} />
 {:else}
   <Game onExit={() => screen = 'menu'} />
 {/if}

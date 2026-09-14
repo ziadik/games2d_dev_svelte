@@ -6,41 +6,29 @@
 <link rel="icon" href="favicon.ico" type="image/x-icon">
 <title>Табло Аэропорта | Live API</title>
 <style>
-  /* CSS Переменные для легкой настройки */
-  :root {
-    --bg-color: #050508;
-    --board-bg-top: #0f0f16;
-    --board-bg-bottom: #08080c;
-    --text-color: #e8c84a;
-    --text-shadow: rgba(232, 200, 74, 0.4);
-    --flap-bg: #1a1a24;
-    --flap-cell-bg: #15151e;
-  }
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: var(--bg-color);
-    color: var(--text-color);
+    background: #050508;
+    color: #e8c84a;
     font-family: 'Courier New', Courier, monospace;
     min-height: 100vh;
     display: flex;
     justify-content: center;
+    /* align-items: center; */
     padding: 10px;
     overflow-x: hidden;
-    transition: background 0.3s;
   }
 
   .board {
     width: 100%;
     max-width: 1400px;
-    background: linear-gradient(180deg, var(--board-bg-top) 0%, var(--board-bg-bottom) 100%);
+    background: linear-gradient(180deg, #0f0f16 0%, #08080c 100%);
     border: 1px solid #2a2a35;
     border-radius: 4px;
     padding: 12px;
     box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 80px rgba(0,0,0,0.9);
     position: relative;
-    transition: background 0.3s;
   }
 
   .board::before {
@@ -56,58 +44,6 @@
     border-radius: 4px;
   }
 
-  /* Кнопка настроек */
-  .settings-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 20;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid #444;
-    color: #fff;
-    cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 14px;
-    opacity: 0.5;
-    transition: opacity 0.3s;
-  }
-  .settings-btn:hover { opacity: 1; }
-
-  /* Модальное окно настроек */
-  .settings-modal {
-    display: none;
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    background: #1a1a24;
-    border: 1px solid #444;
-    padding: 20px;
-    z-index: 100;
-    border-radius: 8px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.9);
-    color: #fff;
-    width: 300px;
-  }
-  .settings-modal.active { display: block; }
-  .settings-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.7);
-    z-index: 99;
-  }
-  .settings-overlay.active { display: block; }
-
-  .setting-row { margin-bottom: 15px; }
-  .setting-row label { display: block; margin-bottom: 5px; font-size: 14px; }
-  .setting-row input[type="range"] { width: 100%; }
-  .setting-row input[type="color"] { width: 100%; height: 30px; border: none; cursor: pointer; }
-  
-  .close-settings {
-    background: #333; color: white; border: none; padding: 5px 10px; cursor: pointer; float: right;
-  }
-
   /* Верхняя панель с часами и погодой */
   .top-panel {
     display: flex;
@@ -120,14 +56,15 @@
   .datetime-header {
     font-size: 40px;
     letter-spacing: 3px;
-    color: var(--text-color);
-    text-shadow: 0 0 4px var(--text-shadow);
+    color: #e8c84a;
+    text-shadow: 0 0 4px rgba(232, 200, 74, 0.4);
     font-weight: bold;
   }
 
   .weather-widget {
     display: flex;
     align-items: center;
+    /* padding-left: 50px; */
     gap: 15px;
     font-size: 40px;
     color: #b8a83a;
@@ -137,6 +74,7 @@
   .weather-temp {
     font-weight: bold;
     font-size: 60px;
+    /* color: #fff; */
   }
 
   .col-headers {
@@ -160,8 +98,8 @@
   .section-divider {
     margin: 8px 0 3px 0;
     padding: 2px 5px;
-    background: var(--flap-cell-bg);
-    border-left: 3px solid var(--text-color);
+    background: #15151e;
+    border-left: 3px solid #e8c84a;
     font-size: 23px;
     font-weight: bold;
     letter-spacing: 2px;
@@ -194,7 +132,7 @@
     max-height: 24px;
     max-width: 36px;
     object-fit: contain;
-    filter: drop-shadow(0 0 2px var(--text-shadow));
+    filter: drop-shadow(0 0 2px rgba(232, 200, 74, 0.3));
   }
 
   .flap-cell {
@@ -202,7 +140,7 @@
     height: 24px;
     width: 16px;
     perspective: 300px;
-    background: var(--flap-cell-bg);
+    background: #15151e;
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -216,12 +154,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px; /* Базовый размер, переопределяется JS/CSS vars если нужно */
+    font-size: 22px;
     font-weight: bold;
-    color: var(--text-color);
-    background: var(--flap-bg);
+    color: #e8c84a;
+    background: #1a1a24;
     backface-visibility: hidden;
-    text-shadow: 0 0 3px var(--text-shadow);
+    text-shadow: 0 0 3px rgba(232, 200, 74, 0.3);
     overflow: hidden;
     box-shadow: inset 0 -1px 0 rgba(0,0,0,0.5);
   }
@@ -247,7 +185,7 @@
     overflow: hidden;
     white-space: nowrap;
     position: relative;
-    background: var(--flap-cell-bg);
+    background: #15151e;
     border-radius: 2px;
     display: flex;
     align-items: center;
@@ -262,8 +200,8 @@
   .status-text {
     font-size: 20px;
     font-weight: bold;
-    color: var(--text-color);
-    text-shadow: 0 0 3px var(--text-shadow);
+    color: #e8c84a;
+    text-shadow: 0 0 3px rgba(232, 200, 74, 0.3);
     padding-right: 50px;
     display: inline-block;
   }
@@ -311,8 +249,13 @@
         gap: 10px;
     }
     
-    .weather-widget { font-size: 18px; }
-    .weather-temp { font-size: 50px; }
+    .weather-widget {
+        font-size: 18px;
+    }
+    
+    .weather-temp {
+        font-size: 50px;
+    }
 
     .col-headers { display: none; }
 
@@ -353,37 +296,7 @@
 </head>
 <body>
 
-<!-- Оверлей и модальное окно настроек -->
-<div class="settings-overlay" id="settingsOverlay"></div>
-<div class="settings-modal" id="settingsModal">
-  <button class="close-settings" id="closeSettings">✕</button>
-  <h3 style="margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 5px;">Настройки вида</h3>
-  
-  <div class="setting-row">
-    <label>Размер шрифта табло (<span id="fontSizeVal">22</span>px)</label>
-    <input type="range" id="fontSizeRange" min="10" max="40" value="22">
-  </div>
-
-  <div class="setting-row">
-    <label>Жирность шрифта (<span id="fontWeightVal">700</span>)</label>
-    <input type="range" id="fontWeightRange" min="100" max="900" step="100" value="700">
-  </div>
-
-  <div class="setting-row">
-    <label>Цвет букв</label>
-    <input type="color" id="textColorPicker" value="#e8c84a">
-  </div>
-
-  <div class="setting-row">
-    <label>Цвет фона</label>
-    <input type="color" id="bgColorPicker" value="#050508">
-  </div>
-  
-  <button onclick="resetSettings()" style="width:100%; padding: 5px; background: #552222; color: white; border: none; cursor: pointer;">Сбросить настройки</button>
-</div>
-
 <div class="board" id="board">
-  <button class="settings-btn" id="openSettings">⚙ Настройки</button>
   <div class="conn-status offline" id="connStatus">OFFLINE</div>
   
   <!-- Верхняя панель: Часы и Погода -->
@@ -419,8 +332,9 @@ const API_BASE = 'http://172.17.0.19:3002';
 const URL_DEP = `${API_BASE}/get/xalTabloDU`;
 const URL_ARR = `${API_BASE}/get/xalTabloAR`;
 const URL_LIVERIES = `${API_BASE}/getImageAll`;
-const URL_WEATHER = 'http://172.17.0.19:3025/getTemp'; 
+const URL_WEATHER = 'http://172.17.0.19:3025/getTemp'; // API погоды
 
+// Обновление табло раз в час (3600000 мс)
 const REFRESH_INTERVAL = 3600000; 
 const RETRY_DELAY = 5000;
 
@@ -429,68 +343,6 @@ const CHARS = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮ�
 
 let liveriesCache = new Map();
 let previousFlightsData = null; 
-
-// --- ЛОГИКА НАСТРОЕК ---
-const settings = {
-  fontSize: localStorage.getItem('tablo_fontSize') || 22,
-  fontWeight: localStorage.getItem('tablo_fontWeight') || 700,
-  textColor: localStorage.getItem('tablo_textColor') || '#e8c84a',
-  bgColor: localStorage.getItem('tablo_bgColor') || '#050508'
-};
-
-function applySettings() {
-  const r = document.querySelector(':root');
-  r.style.setProperty('--text-color', settings.textColor);
-  r.style.setProperty('--bg-color', settings.bgColor);
-  
-  // Обновляем инпуты
-  document.getElementById('fontSizeRange').value = settings.fontSize;
-  document.getElementById('fontSizeVal').textContent = settings.fontSize;
-  document.getElementById('fontWeightRange').value = settings.fontWeight;
-  document.getElementById('fontWeightVal').textContent = settings.fontWeight;
-  document.getElementById('textColorPicker').value = settings.textColor;
-  document.getElementById('bgColorPicker').value = settings.bgColor;
-
-  // Применяем стили к элементам
-  document.querySelectorAll('.flap-char, .status-text').forEach(el => {
-    el.style.fontSize = settings.fontSize + 'px';
-    el.style.fontWeight = settings.fontWeight;
-  });
-}
-
-function saveSetting(key, value) {
-  settings[key] = value;
-  localStorage.setItem('tablo_' + key, value);
-  applySettings();
-}
-
-function resetSettings() {
-  localStorage.clear();
-  location.reload();
-}
-
-// Слушатели событий настроек
-document.getElementById('openSettings').onclick = () => {
-  document.getElementById('settingsModal').classList.add('active');
-  document.getElementById('settingsOverlay').classList.add('active');
-};
-document.getElementById('closeSettings').onclick = () => {
-  document.getElementById('settingsModal').classList.remove('active');
-  document.getElementById('settingsOverlay').classList.remove('active');
-};
-document.getElementById('settingsOverlay').onclick = () => {
-  document.getElementById('settingsModal').classList.remove('active');
-  document.getElementById('settingsOverlay').classList.remove('active');
-};
-
-document.getElementById('fontSizeRange').oninput = (e) => saveSetting('fontSize', e.target.value);
-document.getElementById('fontWeightRange').oninput = (e) => saveSetting('fontWeight', e.target.value);
-document.getElementById('textColorPicker').oninput = (e) => saveSetting('textColor', e.target.value);
-document.getElementById('bgColorPicker').oninput = (e) => saveSetting('bgColor', e.target.value);
-
-// Применяем настройки при загрузке
-applySettings();
-
 
 class FlapChar {
   constructor() {
@@ -564,6 +416,7 @@ async function loadLiveries() {
   } catch (err) { console.error('Ошибка загрузки ливрей:', err); }
 }
 
+// Функция загрузки погоды
 async function loadWeather() {
     try {
         const response = await fetch(URL_WEATHER);
@@ -659,17 +512,28 @@ function parseDestination(destStr) {
 
 function getStatusDep(flight) {
   let parts = [];
+
+  // 1. Обработка задержки
   if (flight.timedelay && flight.time !== flight.timedelay) {
     let delayText = flight.codedelay ? flight.codedelay.replace(/[^а-яА-Яa-zA-Z0-9\s]/g, '').trim() : 'Задержан';
-    if (delayText.toLowerCase().includes('поздн')) delayText = "Позднее прибытие";
+    
+    if (delayText.toLowerCase().includes('поздн')) {
+        delayText = "Позднее прибытие";
+    }
+    
     parts.push(`${delayText} | Задержан до ${flight.timedelay}`);
-  } else {
+  } 
+  // 2. Если задержки нет, проверяем статусы регистрации/посадки
+  else {
       if (flight.ex_chkdone === 'DONE') {
-          if (flight.tbrdbegin || flight.boarding) parts.push("Посадка");
+          if (flight.tbrdbegin || flight.boarding) {
+             parts.push("Посадка");
+          }
       } else if (flight.checking) {
           parts.push("Регистрация");
       }
   }
+
   return parts.join(' ');
 }
 
@@ -735,7 +599,10 @@ async function fetchAndRender() {
       f: f.flight, t: f.time, d: f.dest, s: f.status, g: f.gate
     })));
 
-    if (previousFlightsData === currentDataString) return; 
+    if (previousFlightsData === currentDataString) {
+      return; 
+    }
+
     previousFlightsData = currentDataString;
 
     if (!isOnline) {
@@ -818,7 +685,9 @@ function updateClock() {
 
 async function init() {
   await loadLiveries();
-  await loadWeather(); 
+  await loadWeather(); // Загружаем погоду при старте
+  
+  // Обновляем погоду каждые 15 минут (независимо от табло)
   setInterval(loadWeather, 900000); 
   
   setInterval(updateClock, 1000);
