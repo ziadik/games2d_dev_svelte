@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "ignoreDeprecations": "6.0",
+        "baseUrl": ".",
+        "paths": {
+            "$lib": [
+                "src/lib"
+            ],
+            "$components": [
+                "src/components"
+            ],
+            "$utils": [
+                "src/utils"
+            ]
+        }
+    }
+}

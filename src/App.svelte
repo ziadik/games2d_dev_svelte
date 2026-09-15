@@ -2,7 +2,8 @@
   import Menu from './lib/screens/Menu.svelte';
   import Game from './lib/screens/Pong.svelte';
   import Tablo from './lib/screens/Tablo.svelte';
-  type Screen = 'menu' | 'game' | 'tablo' |string;
+  import Bird from './lib/screens/Bird.svelte';
+  type Screen = 'menu' | 'game' | 'tablo' | 'bird' |string;
   let screen = $state<Screen>('menu');
 </script>
 
@@ -12,6 +13,8 @@
     <Game onExit={() => screen = 'menu'} />
     {:else if screen === 'tablo'}
     <Tablo onExit={() => screen = 'menu'} />
+    {:else if screen === 'bird'}
+    <Bird onExit={() => screen = 'menu'} />
 {/if}
 
 <style>

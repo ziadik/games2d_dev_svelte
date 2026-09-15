@@ -9,6 +9,9 @@
   <h1>Tablo</h1>
   <p>Табло Аэропорта Нижневартовск</p>
   <button onclick={()=>onStart('tablo')}>Показать</button>
+  <h1>Angry Bird</h1>
+  <p>Злая птица</p>
+  <button onclick={()=>onStart('bird')}>Показать</button>
 </div>
 
 <style>
