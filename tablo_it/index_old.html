@@ -337,6 +337,7 @@ const URL_WEATHER = 'http://172.17.0.19:3025/getTemp'; // API погоды
 // Обновление табло раз в час (3600000 мс)
 const REFRESH_INTERVAL = 3600000; 
 const RETRY_DELAY = 5000;
+const WEATHER_INTERVAL = 900_000;
 
 const COL_WIDTHS = { time:5, dest:15, flight:7, gate:5 }; 
 const CHARS = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-:., ";
@@ -688,7 +689,7 @@ async function init() {
   await loadWeather(); // Загружаем погоду при старте
   
   // Обновляем погоду каждые 15 минут (независимо от табло)
-  setInterval(loadWeather, 900000); 
+  setInterval(loadWeather, WEATHER_INTERVAL); 
   
   setInterval(updateClock, 1000);
   updateClock();

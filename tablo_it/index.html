@@ -458,7 +458,7 @@ let previousFlightsData = null;
 // --- ЛОГИКА НАСТРОЕК ---
 const settings = {
   fontSize: localStorage.getItem('tablo_fontSize') || 22,
-  fontWeight: localStorage.getItem('tablo_fontWeight') || 700,
+  fontWeight: localStorage.getItem('tablo_fontWeight') || 700, // Исправлено default на 700
   textColor: localStorage.getItem('tablo_textColor') || '#e8c84a',
   bgColor: localStorage.getItem('tablo_bgColor') || '#050508',
   cellWidth: localStorage.getItem('tablo_cellWidth') || 16,
@@ -493,7 +493,7 @@ function applySettings() {
   document.getElementById('cellHeightRange').value = settings.cellHeight;
   document.getElementById('cellHeightVal').textContent = settings.cellHeight + 'px';
 
-  // Применяем стили к элементам (для текста статуса и заголовков)
+  // Применяем стили ко всем существующим элементам (для мгновенного обновления без перезагрузки)
   document.querySelectorAll('.flap-char, .status-text').forEach(el => {
     el.style.fontSize = settings.fontSize + 'px';
     el.style.fontWeight = settings.fontWeight;
@@ -545,10 +545,10 @@ class FlapChar {
     this.inner.className = 'flap-char';
     this.inner.textContent = ' ';
     
-    // Сброс инлайн стилей для корректной работы CSS переменных
-    this.el.style.width = '';
-    this.el.style.height = '';
-    this.inner.style.fontSize = '';
+    // ВАЖНО: Принудительно применяем текущие настройки к новому элементу,
+    // чтобы они не сбрасывались при обновлении данных
+    this.inner.style.fontSize = settings.fontSize + 'px';
+    this.inner.style.fontWeight = settings.fontWeight;
 
     this.el.appendChild(this.inner);
     this.currentVal = ' ';
@@ -677,8 +677,14 @@ function createRowElement() {
   
   const text1 = document.createElement('span');
   text1.className = 'status-text';
+  // Применяем настройки к статусу сразу при создании
+  text1.style.fontSize = settings.fontSize + 'px';
+  text1.style.fontWeight = settings.fontWeight;
+  
   const text2 = document.createElement('span');
   text2.className = 'status-text';
+  text2.style.fontSize = settings.fontSize + 'px';
+  text2.style.fontWeight = settings.fontWeight;
   
   marqueeWrapper.appendChild(text1);
   marqueeWrapper.appendChild(text2);

@@ -1,11 +1,14 @@
 <script lang="ts">
-  let { onStart }: { onStart: () => void } = $props();
+  let { onStart }: { onStart: (s:string) => void } = $props();
 </script>
 
 <div class="menu">
   <h1>PONG</h1>
   <p>Классика 1972 года</p>
-  <button onclick={onStart}>Играть</button>
+  <button onclick={()=>onStart('game')}>Играть</button>
+  <h1>Tablo</h1>
+  <p>Табло Аэропорта Нижневартовск</p>
+  <button onclick={()=>onStart('tablo')}>Показать</button>
 </div>
 
 <style>
