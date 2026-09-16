@@ -1,43 +1,61 @@
-# Svelte + Vite
+# Fifty Bird
 
-This template should help get you started developing with Svelte in Vite.
+Ремейк Flappy Bird на Svelte 5 + TypeScript с рендером через Canvas 2D.
 
-## Recommended IDE Setup
+## Управление
+- **Space** / **ЛКМ** — взмах крыльев
+- **Enter** — старт / рестарт
+- **Esc** — выход (в браузере — закрыть вкладку)
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+## Запуск
+```bash
+npm install
+npm run dev
+Ассеты (спрайты, звуки, шрифты) положить в static/ (или public/).
 
-## Need an official Svelte framework?
+Структура
+engine/ — FSM, ввод, ассеты, константы
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+entities/ — Bird, Pipe, PipePair
 
-## Technical considerations
+states/ — сцены игры
 
-**Why use this over SvelteKit?**
+FSM
+Одно активное состояние, остальные — фабрики в StateMachine.states.
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
+ts
+change(name, params):
+  current.exit?.()
+  current = states[name]()
+  current.enter?.(params)
+Жизненный цикл состояния:
 
-This template contains as little as possible to get started with Vite + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
+Хук	Когда	Зачем
+enter(params)	после создания	получить данные, настроить сцену
+update(dt)	каждый кадр	игровая логика
+render(rc)	каждый кадр	отрисовка
+exit()	перед сменой	сайд-эффекты
+Поток:
 
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
+text
+title ──Enter──► countdown ──3..2..1──► play
+                  ▲                       │
+                  │                       │ смерть
+                  └────Enter──────────── score
+Состояния не знают друг о друге — переходы через колбэки (onEnter, onComplete, onChangeToScore, onRestart), передаваемые из Game.svelte.
 
-**Why include `.vscode/extensions.json`?**
+Ввод
+InputManager прячет асинхронные keydown/keyup за синхронным API:
 
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
+keysDown — зажатые сейчас
 
-**Why enable `checkJs` in the JS template?**
+keysPressed — нажатия текущего кадра (сброс в endFrame() в конце игрового цикла)
 
-It is likely that most cases of changing variable types in runtime are likely to be accidental, rather than deliberate. This provides advanced typechecking out of the box. Should you like to take advantage of the dynamically-typed nature of JavaScript, it is trivial to change the configuration.
+ts
+if (input.wasKeyPressed('Enter')) sm.change('countdown');
+if (input.wasKeyPressed(' ') || input.wasMousePressed(0)) bird.flap();
+Автоповтор keydown игнорируется: в keysPressed пишем только при первом нажатии.
 
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/sveltejs/svelte-hmr/tree/master/packages/svelte-hmr#preservation-of-local-state).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```js
-// store.js
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
-```
+Игровой цикл
+text
+requestAnimationFrame ──► update(dt) ──► draw() ──► input.endFrame()
