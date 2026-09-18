@@ -64,16 +64,16 @@
   /* Кнопка настроек (СЛЕВА) */
   .settings-btn {
     position: absolute;
-    top: 10px;
+    top: 40px;
     left: 10px;
     z-index: 20;
     background: rgba(0,0,0,0.5);
-    border: 1px solid #444;
-    color: #fff;
+    border: 1px solid var(--text-color);
+    color: var(--text-color);
     cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 34px;
     opacity: 0.5;
     transition: opacity 0.3s;
   }
@@ -175,7 +175,7 @@
     font-size: 23px;
     font-weight: bold;
     letter-spacing: 2px;
-    color: #fff;
+    color: #b8a83a;
     text-transform: uppercase;
     box-shadow: 0 2px 8px rgba(0,0,0,0.5);
   }
@@ -197,13 +197,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 26px;
-    width: 40px;
+    height: var(--cell-height);
+    width: 50px;
   }
   
   .airline-logo img {
-    max-height: 24px;
-    max-width: 36px;
+    max-height: var(--cell-height);
+    max-width: 46px;
     object-fit: contain;
     filter: drop-shadow(0 0 2px var(--text-shadow));
   }
@@ -256,7 +256,7 @@
 
   /* ── СТАТУС (Бегущая строка) ────────────── */
   .status-container {
-    height: 24px;
+    height:  var(--cell-height);
     overflow: hidden;
     white-space: nowrap;
     position: relative;
@@ -273,7 +273,7 @@
   }
 
   .status-text {
-    font-size: 20px;
+    font-size: var(--cell-font-size);
     font-weight: bold;
     color: var(--text-color);
     text-shadow: 0 0 3px var(--text-shadow);
@@ -326,7 +326,7 @@
     }
     
     .weather-widget { font-size: 18px; }
-    .weather-temp { font-size: 50px; }
+    .weather-temp { font-size: var(--cell-font-size); }
 
     .col-headers { display: none; }
 
@@ -347,7 +347,7 @@
     .airline-logo { height: 22px !important; width: 30px !important; }
     .airline-logo img { max-height: 20px !important; max-width: 28px !important; }
     
-    .datetime-header { font-size: 32px; text-align: center; letter-spacing: 2px; }
+    .datetime-header { font-size: var(--cell-font-size); text-align: center; letter-spacing: 2px; }
     .conn-status { position: static; text-align: center; margin-bottom: 8px; display: block; }
     .section-divider { font-size: 21px; padding: 2px 4px; margin: 8px 0 2px 0; }
     .footer { margin-top: 15px; padding-top: 10px; font-size: 10px; }
@@ -407,7 +407,7 @@
 </div>
 
 <div class="board" id="board">
-  <button class="settings-btn" id="openSettings">⚙ Настройки</button>
+  <button class="settings-btn" id="openSettings">⚙</button>
   <div class="conn-status offline" id="connStatus">OFFLINE</div>
   
   <!-- Верхняя панель: Часы и Погода -->
@@ -449,7 +449,7 @@ const REFRESH_INTERVAL = 3600000;
 const RETRY_DELAY = 5000;
 
 // Количество символов в колонках
-const COL_WIDTHS = { time:5, dest:15, flight:7, gate:3 }; 
+const COL_WIDTHS = { time:5, dest:12, flight:7, gate:3 }; 
 const CHARS = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-:., ";
 
 let liveriesCache = new Map();
@@ -851,7 +851,7 @@ function updateRowVisuals(rowObj, data) {
   const currentText = spans[0] ? spans[0].textContent.trim() : '';
   
   if (currentText !== statusText) {
-      if (statusText.length > 25) {
+      if (statusText.length > 15) {
         spans.forEach(span => span.textContent = statusText + '     ');
         wrapper.parentElement.classList.add('scrolling');
       } else {
